@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "atomic": "cpp",
+        "cstring": "cpp",
+        "new": "cpp",
+        "queue": "cpp",
+        "string": "cpp",
+        "type_traits": "cpp",
+        "utility": "cpp",
+        "vector": "cpp"
+    }
+}

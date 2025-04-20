@@ -1,0 +1,98 @@
+@startuml
+entity users {
+    * id : BIGINT <<PK>>
+    --
+    username : VARCHAR(255)
+    password_hash : VARCHAR(255)
+    email : VARCHAR(255)
+    created_at : TIMESTAMP
+    updated_at : TIMESTAMP
+}
+
+entity roles {
+    * id : BIGINT <<PK>>
+    --
+    name : VARCHAR(255)
+    description : TEXT
+}
+
+entity permissions {
+    * id : BIGINT <<PK>>
+    --
+    name : VARCHAR(255)
+    description : TEXT
+}
+
+entity role_permissions {
+    * role_id : BIGINT <<FK>>
+    * permission_id : BIGINT <<FK>>
+}
+
+entity user_roles {
+    * user_id : BIGINT <<FK>>
+    * role_id : BIGINT <<FK>>
+}
+
+entity migrations {
+    * id : BIGINT <<PK>>
+    --
+    name : VARCHAR(255)
+    description : TEXT
+    script_path : VARCHAR(255)
+    rollback_script : VARCHAR(255)
+    status : ENUM('pending', 'applied', 'rolled_back')
+    applied_by : BIGINT <<FK>>
+    applied_at : TIMESTAMP
+    rolled_back_by : BIGINT <<FK>>
+    rolled_back_at : TIMESTAMP
+}
+
+entity migration_logs {
+    * id : BIGINT <<PK>>
+    --
+    migration_id : BIGINT <<FK>>
+    action : ENUM('apply', 'rollback')
+    executed_by : BIGINT <<FK>>
+    executed_at : TIMESTAMP
+    success : BOOLEAN
+    error_message : TEXT
+}
+
+users ||--o{ user_roles : "has roles"
+roles ||--o{ user_roles : "assigned to"
+
+roles ||--o{ role_permissions : "has permissions"
+permissions ||--o{ role_permissions : "granted to"
+migrations ||--o{ migration_logs : "logged in"
+
+@enduml
+
+@startuml
+actor Пользователь
+participant "Клиентское приложение" as Client
+participant "Сервис авторизации" as AuthService
+database "БД авторизации" as AuthDB
+participant "Сервис миграций" as MigrationService
+database "БД миграций" as MigrationDB
+
+Пользователь -> Client: Ввод учетных данных
+Client -> AuthService: Запрос авторизации\n(логин, пароль)
+AuthService -> AuthDB: Проверка учетных данных
+AuthDB --> AuthService: Данные пользователя
+AuthService --> Client: JWT токен
+
+Пользователь -> Client: Запрос на миграцию
+Client -> MigrationService: Запрос операции с миграциями\n(с JWT токеном)
+MigrationService -> AuthService: Проверка прав
+AuthService --> MigrationService: Права предоставлены/отклонены
+
+alt if Прав достаточно
+    MigrationService -> MigrationDB: Выполнение операции с миграцией
+    MigrationDB --> MigrationService: Результат операции
+    MigrationService --> Client: Ответ о выполнении
+else
+    MigrationService --> Client: Недостаточно прав
+end
+
+Client --> Пользователь: Отображение результата
+@enduml
