@@ -38,8 +38,8 @@ entity migrations {
     --
     name : VARCHAR(255)
     description : TEXT
-    script_path : VARCHAR(255)
-    rollback_script : VARCHAR(255)
+    script : TEXT
+    rollback_script : TEXT
     status : ENUM('pending', 'applied', 'rolled_back')
     applied_by : BIGINT <<FK>>
     applied_at : TIMESTAMP

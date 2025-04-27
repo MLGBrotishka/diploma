@@ -1,0 +1,373 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "migrator/migrator.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "MigrationService"
+    }
+  ],
+  "host": "localhost:8080",
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/migrations": {
+      "get": {
+        "summary": "Получение списка миграций",
+        "operationId": "MigrationService_ListMigrations",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/migrationListMigrationsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "status",
+            "description": "Фильтр по статусу (например, \"pending\", \"applied\", \"rolled_back\")",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "MigrationService"
+        ]
+      },
+      "post": {
+        "summary": "Создание новой миграции",
+        "operationId": "MigrationService_CreateMigration",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/migrationCreateMigrationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/migrationCreateMigrationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "MigrationService"
+        ]
+      }
+    },
+    "/v1/migrations/apply": {
+      "post": {
+        "summary": "Применение миграций",
+        "operationId": "MigrationService_ApplyMigration",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/migrationApplyMigrationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/migrationApplyMigrationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "MigrationService"
+        ]
+      }
+    },
+    "/v1/migrations/{migrationId}": {
+      "get": {
+        "summary": "Получение конкретной миграции",
+        "operationId": "MigrationService_GetMigration",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/migrationGetMigrationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "migrationId",
+            "description": "Уникальный идентификатор миграции",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "MigrationService"
+        ]
+      }
+    },
+    "/v1/migrations/{migrationId}/rollback": {
+      "post": {
+        "summary": "Откат миграции",
+        "operationId": "MigrationService_RollbackMigration",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/migrationRollbackMigrationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "migrationId",
+            "description": "Уникальный идентификатор миграции",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MigrationServiceRollbackMigrationBody"
+            }
+          }
+        ],
+        "tags": [
+          "MigrationService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "MigrationServiceRollbackMigrationBody": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "format": "int64",
+          "title": "Идентификатор пользователя, выполняющего откат"
+        }
+      },
+      "title": "Запрос для отката миграции"
+    },
+    "migrationApplyMigrationRequest": {
+      "type": "object",
+      "properties": {
+        "migrationIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "int64"
+          },
+          "title": "Уникальные идентификаторы миграций в соответствии с порядком применения"
+        },
+        "userId": {
+          "type": "string",
+          "format": "int64",
+          "title": "Идентификатор пользователя, применяющего миграцию"
+        }
+      },
+      "title": "Запрос для применения миграций"
+    },
+    "migrationApplyMigrationResponse": {
+      "type": "object",
+      "properties": {
+        "appliedAt": {
+          "type": "string",
+          "title": "Дата и время применения миграции"
+        }
+      },
+      "title": "Ответ на запрос для применения миграций"
+    },
+    "migrationCreateMigrationRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "Название миграции"
+        },
+        "description": {
+          "type": "string",
+          "title": "Описание миграции"
+        },
+        "script": {
+          "type": "string",
+          "title": "Текст скрипта миграции"
+        },
+        "rollbackScript": {
+          "type": "string",
+          "title": "Текст скрипта отката миграции"
+        },
+        "userId": {
+          "type": "string",
+          "format": "int64",
+          "title": "Идентификатор пользователя, создающего миграцию"
+        }
+      },
+      "title": "Запрос для создания миграции"
+    },
+    "migrationCreateMigrationResponse": {
+      "type": "object",
+      "properties": {
+        "migrationId": {
+          "type": "string",
+          "format": "int64",
+          "title": "Уникальный идентификатор созданной миграции"
+        }
+      },
+      "title": "Ответ на запрос для создания миграции"
+    },
+    "migrationGetMigrationResponse": {
+      "type": "object",
+      "properties": {
+        "migration": {
+          "$ref": "#/definitions/migrationMigrationInfo",
+          "title": "Миграция"
+        }
+      },
+      "title": "Ответ на запрос для получения миграции"
+    },
+    "migrationListMigrationsResponse": {
+      "type": "object",
+      "properties": {
+        "migrations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/migrationMigrationInfo"
+          },
+          "title": "Список миграций"
+        }
+      },
+      "title": "Ответ на запрос для получения списка миграций"
+    },
+    "migrationMigrationInfo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "int64",
+          "title": "Уникальный идентификатор миграции"
+        },
+        "name": {
+          "type": "string",
+          "title": "Название миграции"
+        },
+        "description": {
+          "type": "string",
+          "title": "Описание миграции"
+        },
+        "script": {
+          "type": "string",
+          "title": "Текст скрипта миграции"
+        },
+        "rollbackScript": {
+          "type": "string",
+          "title": "Текст скрипта отката миграции"
+        },
+        "status": {
+          "type": "string",
+          "title": "Текущий статус миграции"
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "int64",
+          "title": "Идентификатор пользователя, применившего миграцию"
+        },
+        "statusUpdatedAt": {
+          "type": "string",
+          "title": "Дата и время обновления статуса миграции"
+        }
+      },
+      "title": "Информация о миграции"
+    },
+    "migrationRollbackMigrationResponse": {
+      "type": "object",
+      "properties": {
+        "rolledBackAt": {
+          "type": "string",
+          "title": "Дата и время отката миграции"
+        }
+      },
+      "title": "Ответ на запрос для отката миграции"
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

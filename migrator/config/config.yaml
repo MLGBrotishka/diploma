@@ -1,0 +1,15 @@
+app:
+  name: 'migrator'
+  version: '1.0.0'
+  
+logger:
+  log_level: 'debug'
+
+grpc:
+  port: 50051
+
+http:
+  port: 8080
+
+postgres:
+  url: 'postgres://user:password@postgres-database:5434/migrator?sslmode=disable'

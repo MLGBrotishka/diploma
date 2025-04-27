@@ -1,0 +1,109 @@
+version: "3.8"
+
+services:
+  migrator:
+    container_name: migrator
+    build: ./migrator/
+    ports:
+      - "50051:50051" # GRPC
+      - "8080:8080" # HTTP
+    environment:
+      - APP_NAME=migrator
+      - APP_VERSION=1.0.0
+      - GRPC_PORT=50051
+      - LOG_LEVEL=debug
+      - POSTGRES_URL=postgres://user:password@postgres-database:5434/migrator?sslmode=disable
+    links: 
+        - postgres-database
+    # depends_on:
+    #   postgres-database:
+    #     condition: service_healthy
+    networks:
+      - default
+
+
+  postgres-database:
+    container_name: postgres-database
+    image: postgres:16
+    restart: unless-stopped
+    volumes:
+      - "postgres:/data/postgres"
+    ports:
+      - 5434:5434
+    command: ["postgres", "-p", "5434"]
+    user: postgres
+    environment:
+      POSTGRES_DB: migrator
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready","--quiet", "-p", "5434"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - default
+  
+  postgres-auth:
+    container_name: postgres-auth
+    image: postgres:16
+    restart: unless-stopped
+    volumes:
+      - "postgres:/data/postgres"
+    ports:
+    - "5433:5433"
+    command: ["postgres", "-p", "5433"]
+    user: postgres
+    environment:
+      POSTGRES_DB: auth
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready","--quiet", "-p", "5433"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - default
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - "9090:9090"
+    networks:
+      - default
+
+  grafana:
+    image: grafana/grafana:latest
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - default
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"
+      - "4318:4318"
+    networks:
+      - default
+
+
+networks:
+  default:
+    driver: bridge
+
+volumes:
+  postgres:
+  prometheus_data: {}
+  grafana_data: {}
