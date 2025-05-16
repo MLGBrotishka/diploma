@@ -671,7 +671,9 @@ const file_migrator_migrator_proto_rawDesc = "" +
 	"\x0eApplyMigration\x12 .migration.ApplyMigrationRequest\x1a!.migration.ApplyMigrationResponse\"\x1f\x82\xd3\xe4\x93\x02\x19:\x01*\"\x14/v1/migrations/apply\x12\x91\x01\n" +
 	"\x11RollbackMigration\x12#.migration.RollbackMigrationRequest\x1a$.migration.RollbackMigrationResponse\"1\x82\xd3\xe4\x93\x02+:\x01*\"&/v1/migrations/{migration_id}/rollback\x12m\n" +
 	"\x0eListMigrations\x12 .migration.ListMigrationsRequest\x1a!.migration.ListMigrationsResponse\"\x16\x82\xd3\xe4\x93\x02\x10\x12\x0e/v1/migrations\x12v\n" +
-	"\fGetMigration\x12\x1e.migration.GetMigrationRequest\x1a\x1f.migration.GetMigrationResponse\"%\x82\xd3\xe4\x93\x02\x1f\x12\x1d/v1/migrations/{migration_id}B*\x92A\x10\x1a\x0elocalhost:8080Z\x15migrator/api/migratorb\x06proto3"
+	"\fGetMigration\x12\x1e.migration.GetMigrationRequest\x1a\x1f.migration.GetMigrationResponse\"%\x82\xd3\xe4\x93\x02\x1f\x12\x1d/v1/migrations/{migration_id}B\xde\x01\x92A\xc3\x01\n" +
+	"\x032.0\x12\x84\x01\n" +
+	"\x15Migration Service API\x12fAPI для управления миграциями в реляционных базах данных2\x031.0\x1a\x0elocalhost:8080*\x01\x012\x10application/json:\x10application/jsonZ\x15migrator/api/migratorb\x06proto3"
 
 var (
 	file_migrator_migrator_proto_rawDescOnce sync.Once

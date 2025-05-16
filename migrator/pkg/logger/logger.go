@@ -1,3 +1,4 @@
+// Package logger реализует логирование.
 package logger
 
 import (
@@ -21,8 +22,6 @@ type Interface interface {
 type Logger struct {
 	logger *zerolog.Logger
 }
-
-var _ Interface = (*Logger)(nil)
 
 const (
 	DefaultLevel = "info"

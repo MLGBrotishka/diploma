@@ -1,0 +1,9 @@
+FROM golang:1.24-alpine
+
+WORKDIR /app
+
+COPY . .
+
+EXPOSE 8082
+
+ENTRYPOINT ["/bin/sh", "-c", "make godoc"]

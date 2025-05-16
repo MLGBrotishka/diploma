@@ -1,0 +1,148 @@
+@startuml
+
+skinparam linetype ortho
+
+package "config" {
+    class Config {
+        Основной конфиг приложения
+        Содержит настройки всех компонентов
+        +App
+        +Log
+        +Postgres
+        +GRPC
+        +HTTP
+    }
+    class AppConfig {
+        +Name
+        +Version
+    }
+    class LogConfig {
+        +Level
+    }
+    class PostgresConfig {
+        +URL
+    }
+    class GRPCConfig {
+        +Port
+    }
+    class HTTPConfig {
+        +Port
+    }
+}
+
+package "internal/adapters/grpc" {
+    class GrpcService {
+        gRPC-интерфейс для работы с миграциями
+        Передаёт команды в сервис Migrator
+        +ApplyMigration()
+        +CreateMigration()
+        +GetMigration()
+        +ListMigrations()
+        +RollbackMigration()
+    }
+}
+
+package "internal/services/migrator" {
+    class Migrator {
+        Основная логика работы с миграциями
+        Использует репозиторий для хранения данных
+        +CreateMigration()
+        +ApplyMigration()
+        +RollbackMigration()
+        +ListMigrations()
+        +GetMigration()
+    }
+}
+
+package "internal/repository/migration" {
+    class MigrationRepository {
+        Работает с БД через PGPool
+        Управляет миграциями
+        +Get()
+        +Create()
+        +Apply()
+        +SetStatus()
+        +List()
+        +GetLatestAppliedMigration()
+        +DoInTransaction()
+    }
+}
+
+package "internal/entity" {
+    class MigrationInfo {
+        +ID
+        +Name
+        +Description
+        +Script
+        +RollbackScript
+        +Status
+        +CreatedBy
+        +StatusUpdatedAt
+    }
+    class MigrationStatus {
+        +String()
+    }
+}
+
+package "pkg/postgres" {
+    class PGPool {
+        Пул соединений с PostgreSQL
+        Получает настройки из Config
+        +Pool
+        +Close()
+    }
+}
+
+package "pkg/logger" {
+    class Logger {
+        Логгер с разными уровнями вывода
+        Читает уровень логирования из Config
+        +Debug()
+        +Info()
+        +Warn()
+        +Error()
+        +Fatal()
+    }
+}
+
+package "internal/services/initializer" {
+    class DbInitializerService {
+        Инициализирует структуру БД
+        Создаёт необходимые таблицы
+        +InitDB()
+    }
+}
+
+package "internal/repository/intiter" {
+    class InitRepository {
+        Работает через PGPool
+        Создаёт таблицу миграций если её нет
+        +CreateMigrationsTable()
+    }
+}
+
+' Dependencies
+Config --> GRPCConfig
+Config --> HTTPConfig
+Config --> AppConfig
+Config --> LogConfig
+Config --> PostgresConfig
+
+GrpcService ..> Migrator
+
+Migrator ..> MigrationRepository 
+Migrator --> MigrationInfo 
+Migrator --> MigrationStatus 
+
+MigrationRepository ..> PGPool 
+MigrationRepository --> MigrationInfo 
+MigrationRepository --> MigrationStatus 
+
+DbInitializerService ..> InitRepository 
+InitRepository ..> PGPool 
+
+Logger ..> Config 
+PGPool ..> Config 
+
+MigrationInfo --> MigrationStatus 
+@enduml

@@ -1,3 +1,4 @@
+// Package entity определяет сущности, используемые в сервисе миграций.
 package entity
 
 import "time"

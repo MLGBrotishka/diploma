@@ -1,3 +1,4 @@
+// Package postgres реализует опции для подключения к базе данных PostgreSQL.
 package postgres
 
 import "time"

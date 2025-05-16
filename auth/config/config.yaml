@@ -1,0 +1,19 @@
+app:
+  name: 'auth'
+  version: '1.0.0'
+  
+logger:
+  log_level: 'debug'
+
+grpc:
+  port: 50052
+
+http:
+  port: 8081
+
+postgres:
+  url: 'postgres://user:password@postgres-auth:5434/auth?sslmode=disable'
+
+jwt:
+  secret: 'secret'
+  ttl: 86400

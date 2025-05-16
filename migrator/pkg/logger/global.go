@@ -1,3 +1,4 @@
+// Package logger предоставляет глобальный логгер.
 package logger
 
 var packageLogger *Logger

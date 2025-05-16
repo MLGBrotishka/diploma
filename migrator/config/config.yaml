@@ -13,3 +13,7 @@ http:
 
 postgres:
   url: 'postgres://user:password@postgres-database:5434/migrator?sslmode=disable'
+
+auth:
+  grpc:
+    addr: 'localhost:50052'

@@ -1,0 +1,47 @@
+@startuml
+
+skinparam linetype ortho
+
+package "Серверная компонента" {
+  [Клиент] --> [Auth Service] : HTTP/gRPC запросы
+  [Клиент] --> [Migration Service] : HTTP/gRPC запросы
+
+  package "Документация" {
+    [Swagger UI (Auth)] --> [Auth Service] 
+    [Swagger UI (Migration)] --> [Migration Service] 
+    [Godoc (Auth)] #..# [Auth Service]
+    [Godoc (Migration)] #..# [Migration Service]
+  }
+  
+  package "Auth Service" {
+    [REST/gRPC API (Auth)] --> [Auth Service Logic]
+    [Auth Service Logic] --> [Auth Repository]
+    [Auth Repository] --> [PostgreSQL Driver (Auth)]
+  }
+
+  package "Migration Service" {
+    [REST/gRPC API (Migrator)] --> [Migrator Service Logic]
+    [Migrator Service Logic] --> [Migration Repository]
+    [Migration Repository] --> [PostgreSQL Driver (Migration)]
+  }
+
+  [Migration Service] --> [Auth Service] : Проверка прав (gRPC)
+
+  package "Docker PostgreSQL (Auth)" {
+    [Docker Volume (Auth)]
+  }
+
+  package "Docker PostgreSQL (Migration)" {
+    [Docker Volume (Migration)]
+  }
+  [PostgreSQL Driver (Auth)] #..# [Docker PostgreSQL (Auth)] : Соединение
+  [PostgreSQL Driver (Migration)] #..# [Docker PostgreSQL (Migration)] : Соединение
+
+}
+
+[Клиент] --> [Swagger UI (Auth)] : Просмотр API
+[Клиент] --> [Swagger UI (Migration)] : Просмотр API
+[Клиент] --> [Godoc (Auth)] : Просмотр кода
+[Клиент] --> [Godoc (Migration)] : Просмотр кода
+
+@enduml

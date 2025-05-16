@@ -1,3 +1,6 @@
+// Package main - основная точка входа для сервиса migrator.
+//
+// Здесь инициализируется и запускаются все компоненты сервиса
 package main
 
 import (
@@ -12,11 +15,14 @@ import (
 	"syscall"
 
 	"migrator/config"
-	grpc_client "migrator/internal/adapter/grpc"
-	"migrator/internal/adapter/repository/intiter"
-	"migrator/internal/adapter/repository/migration"
-	"migrator/internal/service/initializer"
-	migratorService "migrator/internal/service/migrator"
+	"migrator/internal/adapters/grpc/client"
+	grpc_server "migrator/internal/adapters/grpc/server"
+	"migrator/internal/adapters/repository/intiter"
+	"migrator/internal/adapters/repository/migration"
+	"migrator/internal/services/checker"
+	"migrator/internal/services/initializer"
+	migratorService "migrator/internal/services/migrator"
+	"migrator/pkg/api/auth"
 	"migrator/pkg/api/migrator"
 	"migrator/pkg/logger"
 	"migrator/pkg/postgres"
@@ -68,7 +74,15 @@ func main() {
 	migrationRepo := migration.New(dbConn.Pool)
 	migrationSrv := migratorService.New(migrationRepo)
 
-	grpcService := grpc_client.NewMigration(migrationSrv)
+	grpcConn, err := grpc.NewClient(cfg.Auth.GRPC.Addr)
+	if err != nil {
+		log.Fatalf("failed to connect to auth service: %v", err)
+	}
+	authSrv := auth.NewAuthClient(grpcConn)
+	authClient := client.New(authSrv)
+
+	checkerSrv := checker.NewMigratorWithAuth(migrationSrv, authClient)
+	grpcService := grpc_server.NewMigration(checkerSrv)
 
 	loggingOpts := []logging.Option{
 		logging.WithLogOnEvents(
@@ -105,7 +119,7 @@ func main() {
 	}
 
 	withCors := cors.New(cors.Options{
-		AllowOriginFunc:  func(origin string) bool { return true },
+		AllowedOrigins:   []string{"http://localhost", "http://localhost:8082"},
 		AllowedMethods:   []string{"GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"ACCEPT", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},

@@ -5,14 +5,23 @@ package migration;
 option go_package = "migrator/api/migrator";
 
 
-import "google/api/annotations.proto"; // Импортируем аннотации для REST
+import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+    swagger: "2.0";
+    info: {
+        title: "Migration Service API";
+        version: "1.0";
+        description: "API для управления миграциями в реляционных базах данных";
+    };
     host: "localhost:8080";
+    schemes: HTTP;
+    consumes: "application/json";
+    produces: "application/json";
 };
 
-// Определение сервиса
+// MigrationService - сервис для управления миграциями
 service MigrationService {
     // Создание новой миграции
     rpc CreateMigration (CreateMigrationRequest) returns (CreateMigrationResponse) {

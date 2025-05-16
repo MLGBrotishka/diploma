@@ -30,7 +30,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// Определение сервиса
+// MigrationService - сервис для управления миграциями
 type MigrationServiceClient interface {
 	// Создание новой миграции
 	CreateMigration(ctx context.Context, in *CreateMigrationRequest, opts ...grpc.CallOption) (*CreateMigrationResponse, error)
@@ -106,7 +106,7 @@ func (c *migrationServiceClient) GetMigration(ctx context.Context, in *GetMigrat
 // All implementations must embed UnimplementedMigrationServiceServer
 // for forward compatibility.
 //
-// Определение сервиса
+// MigrationService - сервис для управления миграциями
 type MigrationServiceServer interface {
 	// Создание новой миграции
 	CreateMigration(context.Context, *CreateMigrationRequest) (*CreateMigrationResponse, error)

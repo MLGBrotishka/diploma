@@ -1,8 +1,9 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "migrator/migrator.proto",
-    "version": "version not set"
+    "title": "Migration Service API",
+    "description": "API для управления миграциями в реляционных базах данных",
+    "version": "1.0"
   },
   "tags": [
     {
@@ -10,6 +11,9 @@
     }
   ],
   "host": "localhost:8080",
+  "schemes": [
+    "http"
+  ],
   "consumes": [
     "application/json"
   ],

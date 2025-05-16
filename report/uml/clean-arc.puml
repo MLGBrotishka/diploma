@@ -1,0 +1,35 @@
+@startuml
+
+skinparam linetype ortho
+skinparam componentStyle rectangle
+
+component "Слой адаптеров (Controllers)" as adapters {
+  frame "Данные" as data {
+    component "Postgres" as postgres 
+    component "Redis" as redis
+  }
+
+  frame "Интерфейсы" as interfaces {
+    component "Rest API" as restAPI
+    component "gRPC" as grpc
+  }
+    
+  component "Слой бизнес-сценариев (Use-cases)" as useCases {
+    component "Сервис управления миграциями" as migrationService
+    component "Сервис работы с токенами" as tokenService
+    
+    component "Слой сущностей (Entities)" as [entities] {
+      component "Миграция" as migrationEntity
+      component "Лог миграций" as migrationLogEntity
+      component "Пользователь" as userEntity
+    }
+  }
+}
+
+' Соединения между слоями'
+data --> useCases
+interfaces --> useCases
+
+migrationService --> entities
+tokenService --> entities
+@enduml

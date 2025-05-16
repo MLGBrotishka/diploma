@@ -1,0 +1,29 @@
+@startuml
+actor Пользователь
+participant "Клиентское приложение" as Client
+participant "Сервис авторизации" as AuthService
+database "БД авторизации" as AuthDB
+participant "Сервис миграций" as MigrationService
+database "БД миграций" as MigrationDB
+
+Пользователь -> Client: Ввод учетных данных
+Client -> AuthService: Запрос авторизации\n(логин, пароль)
+AuthService -> AuthDB: Проверка учетных данных
+AuthDB --> AuthService: Данные пользователя
+AuthService --> Client: JWT токен
+
+Пользователь -> Client: Запрос на миграцию
+Client -> MigrationService: Запрос операции с миграциями\n(с JWT токеном)
+MigrationService -> AuthService: Проверка прав
+AuthService --> MigrationService: Права предоставлены/отклонены
+
+alt if Прав достаточно
+    MigrationService -> MigrationDB: Выполнение операции с миграцией
+    MigrationDB --> MigrationService: Результат операции
+    MigrationService --> Client: Ответ о выполнении
+else
+    MigrationService --> Client: Недостаточно прав
+end
+
+Client --> Пользователь: Отображение результата
+@enduml

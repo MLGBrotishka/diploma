@@ -1,0 +1,102 @@
+syntax = "proto3";
+
+package auth;
+
+option go_package = "auth/api/auth";
+
+import "google/api/annotations.proto"; 
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  host: "localhost:8081";
+};
+
+// Auth - сервис для управления пользователями и правами
+service Auth {
+  // Регистрация нового пользователя
+  rpc Register (RegisterRequest) returns (RegisterResponse){
+    option (google.api.http) = {
+      post: "/v1/register"
+      body: "*"
+    };
+  }
+
+  // Авторизация пользователя
+  rpc Login (LoginRequest) returns (LoginResponse){
+    option (google.api.http) = {
+      post: "/v1/login"
+      body: "*"
+    };
+  }
+
+  // Выход из системы
+  rpc Logout (LogoutRequest) returns (LogoutResponse){
+    option (google.api.http) = {
+      post: "/v1/logout"
+      body: "*"
+    };
+  }
+
+  // Проверка прав пользователя
+  rpc CheckPermission (PermissionRequest) returns (PermissionResponse){
+    option (google.api.http) = {
+      post: "/v1/users/{user_id}/check-permission"
+      body: "*"
+    };
+  }
+}
+
+// Запрос для регистрации нового пользователя
+message RegisterRequest {
+  string login = 1; // Логин пользователя.
+  string password = 2; // Пароль пользователя.
+}
+
+// Ответ на запрос для регистрации нового пользователя
+message RegisterResponse {
+  int64 user_id = 1; // User ID of the registered user.
+}
+
+// Запрос для авторизации пользователя
+message LoginRequest {
+  string login = 1; // Логин пользователя.
+  string password = 2; // Пароль пользователя.
+}
+
+// Ответ на запрос для авторизации пользователя
+message LoginResponse {
+  string token = 1; // Токен для авторизации.
+}
+
+// Запрос для выхода из системы
+message LogoutRequest {
+  string token = 1; // Токен для авторизации.
+}
+
+// Ответ на запрос для выхода из системы
+message LogoutResponse {
+  bool success = 1; // Результат выполнения операции.
+}
+
+// Запрос для проверки прав пользователя
+message PermissionRequest {
+  int64 user_id = 1; // Айди пользователя для проверки прав.
+  Permission permission = 2; // Тип права для проверки.
+}
+
+// Ответ на запрос для проверки прав пользователя
+message PermissionResponse {
+  bool have_permission = 1; // Indicates whether the user has the permission.
+}
+
+// Перечисление типов прав доступа
+enum Permission {
+  PERMISSION_NONE = 0;
+  PERMISSION_CREATE = 1; // Право на создание сущностей.
+  PERMISSION_APPLY = 2; // Право на применение изменений.
+  PERMISSION_ROLLBACK = 3; // Право на откат изменений.
+  PERMISSION_LIST = 4; // Право на просмотр списков.
+  PERMISSION_GET = 5; // Право на получение конкретной сущности.
+  PERMISSION_APPLY_OTHER = 6; // Право на применение изменений, созданных другими.
+  PERMISSION_ROLLBACK_OTHER = 7; // Право на откат изменений, созданных другими.
+}

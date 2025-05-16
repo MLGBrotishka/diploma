@@ -13,21 +13,81 @@ services:
       - GRPC_PORT=50051
       - LOG_LEVEL=debug
       - POSTGRES_URL=postgres://user:password@postgres-database:5434/migrator?sslmode=disable
+      - AUTH_GRPC_ADDR=auth:50052
     links: 
         - postgres-database
-    # depends_on:
-    #   postgres-database:
-    #     condition: service_healthy
     networks:
       - default
 
+  auth:
+    container_name: auth
+    build: ./auth/
+    ports:
+      - "50051:50052" # GRPC
+      - "8080:8081" # HTTP
+    environment:
+      - APP_NAME=auth
+      - APP_VERSION=1.0.0
+      - GRPC_PORT=50051
+      - LOG_LEVEL=debug
+      - POSTGRES_URL=postgres://user:password@postgres-auth:5434/migrator?sslmode=disable
+      - JWT_SECRET=secret
+      - JWT_TTL=86400
+    links: 
+        - postgres-auth
+    networks:
+      - default
+      
+  migrator-swagger:
+    container_name: migrator-swagger
+    build:
+      context: ./migrator
+      dockerfile: Dockerfile.swagger
+    ports:
+      - "8081:8082" # HTTP
+    depends_on:
+      - migrator
+    networks:
+      - default
+
+  migrator-godoc:
+    container_name: migrator-godoc
+    build:
+      context: ./migrator
+      dockerfile: Dockerfile.godoc
+    ports:
+      - "8082:8083" # HTTP
+    depends_on:
+      - migrator
+    networks:
+      - default
+
+  auth-swagger:
+    container_name: auth-swagger
+    build:
+      context: ./auth
+      dockerfile: Dockerfile.swagger
+    ports:
+      - "8081:8084" # HTTP
+    networks:
+      - default
+
+  auth-godoc:
+    container_name: auth-godoc
+    build:
+      context: ./auth
+      dockerfile: Dockerfile.godoc
+    ports:
+      - "8082:8085" # HTTP
+    networks:
+      - default
 
   postgres-database:
     container_name: postgres-database
     image: postgres:16
     restart: unless-stopped
     volumes:
-      - "postgres:/data/postgres"
+      - "postgres_data:/data/postgres"
     ports:
       - 5434:5434
     command: ["postgres", "-p", "5434"]
@@ -49,7 +109,7 @@ services:
     image: postgres:16
     restart: unless-stopped
     volumes:
-      - "postgres:/data/postgres"
+      - "postgres_auth:/data/postgres"
     ports:
     - "5433:5433"
     command: ["postgres", "-p", "5433"]
@@ -66,44 +126,10 @@ services:
     networks:
       - default
 
-  prometheus:
-    image: prom/prometheus:latest
-    volumes:
-      - ./prometheus/:/etc/prometheus/
-      - prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-      - '--web.console.templates=/usr/share/prometheus/consoles'
-    ports:
-      - "9090:9090"
-    networks:
-      - default
-
-  grafana:
-    image: grafana/grafana:latest
-    volumes:
-      - grafana_data:/var/lib/grafana
-    ports:
-      - "3000:3000"
-    networks:
-      - default
-
-  jaeger:
-    image: jaegertracing/all-in-one:latest
-    ports:
-      - "16686:16686"
-      - "4318:4318"
-    networks:
-      - default
-
-
 networks:
   default:
     driver: bridge
 
 volumes:
-  postgres:
-  prometheus_data: {}
-  grafana_data: {}
+  postgres_data: {}
+  postgres_auth: {}

@@ -1,0 +1,37 @@
+@startuml
+skinparam ArrowMessageAlignment center
+
+' Включаем entity users из диаграммы аутентификации для связей created_by и executed_by
+entity "users (Auth Service)" as users {
+    * id : BIGINT <<PK>>
+}
+
+entity migrations {
+    * id : BIGINT <<PK>>
+    --
+    name : TEXT
+    description : TEXT
+    script : TEXT
+    rollback_script : TEXT
+    status : ENUM('pending', 'applied', 'rolled_back')
+    created_by : BIGINT <<FK>>
+    created_at : TIMESTAMP
+    status_updated_at: TIMESTAMP
+}
+
+entity migration_logs {
+    * id : BIGINT <<PK>>
+    --
+    migration_id : BIGINT <<FK>>
+    action : ENUM('apply', 'rollback')
+    executed_by : BIGINT <<FK>>
+    executed_at : TIMESTAMP
+    success : BOOLEAN
+    error_message : TEXT
+}
+
+migrations ||--o{ migration_logs : "Записана в лог"
+migrations ||--o{ users : "Создана пользователем"
+migration_logs ||--o{ users : "Выполнено пользователем"
+
+@enduml

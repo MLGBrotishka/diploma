@@ -1,0 +1,44 @@
+@startuml
+
+skinparam linetype ortho
+skinparam ArrowMessageAlignment center
+
+entity users {
+    * id : BIGINT <<PK>>
+    --
+    login: TEXT
+    password_hash : TEXT
+    created_at : TIMESTAMP
+    updated_at : TIMESTAMP
+}
+
+entity roles {
+    * id : BIGINT <<PK>>
+    --
+    name : TEXT
+    description : TEXT
+}
+
+entity permissions {
+    * id : BIGINT <<PK>>
+    --
+    name : TEXT
+    description : TEXT
+}
+
+entity role_permissions {
+    * role_id : BIGINT <<FK>>
+    * permission_id : BIGINT <<FK>>
+}
+
+entity user_roles {
+    * user_id : BIGINT <<FK>>
+    * role_id : BIGINT <<FK>>
+}
+
+users ||--o{ user_roles : "Имеет роли"
+roles ||--o{ user_roles : "Назначена"
+roles ||--o{ role_permissions : "Имеет разрешения"
+permissions ||--o{ role_permissions : "Назначена"
+
+@enduml

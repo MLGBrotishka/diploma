@@ -1,0 +1,247 @@
+@startuml
+top to bottom direction
+
+package migrator\cmd\migrator{
+    annotation migrator\cmd\migrator {
+        -const defaultConfigPath: STRING
+
+        -main()
+        +InterceptorLogger(l *Logger): Logger
+    }
+}
+package migrator\config{
+    annotation migrator\config {
+        +NewConfig(env string): *Config, error
+    }
+    class GRPC  {
+        +Port: int
+    }
+    class HTTP {
+        +Port: string
+
+    }
+    class Config {
+        +App: App
+        +Log: Log
+        +Postgres: Postgres
+        +GRPC: GRPC
+        +HTTP: HTTP
+
+    }
+    class App {
+        +Name: string
+        +Version: string
+
+    }
+    class Log {
+        +Level: string
+
+    }
+    class Postgres {
+        +URL: string
+    }
+}
+package migrator\internal\adapters\grpc{
+    annotation migrator\internal\adapters\grpc {
+        +NewMigration(srv MigrationService): *Service
+        -convertToGrpcMigrations(migrations []MigrationInfo): []*MigrationInfo
+        -convertToGrpcMigration(migration MigrationInfo): *MigrationInfo
+    }
+
+    interface MigrationService{
+        +CreateMigration(ctx Context, name string, description string, script string, rollbackScript string, userID int64): int64, error
+        +ApplyMigration(ctx Context, migrationIDs []int64, userID int64): Time, error
+        +RollbackMigration(ctx Context, migrationID int64, userID int64): Time, error
+        +ListMigrations(ctx Context, statusFilter string): []MigrationInfo, error
+        +GetMigration(ctx Context, migrationID int64): MigrationInfo, error
+    }
+    class Service {
+        +: UnimplementedMigrationServiceServer
+        -srv: MigrationService
+        +ApplyMigration(ctx Context, req *ApplyMigrationRequest): *ApplyMigrationResponse, error
+        +CreateMigration(ctx Context, req *CreateMigrationRequest): *CreateMigrationResponse, error
+        +GetMigration(ctx Context, req *GetMigrationRequest): *GetMigrationResponse, error
+        +ListMigrations(ctx Context, req *ListMigrationsRequest): *ListMigrationsResponse, error
+        +RollbackMigration(ctx Context, req *RollbackMigrationRequest): *RollbackMigrationResponse, error
+    }
+}
+package migrator\internal\adapters\repository\intiter{
+    annotation migrator\internal\adapters\repository\intiter {
+        -const createMigrationsTableQuery: STRING
+
+        +New(conn Excecutor): *Repository
+    }
+    interface Excecutor{
+        +Begin(ctx Context): Tx, error
+        +BeginFunc(ctx Context, f func( Tx) error): error
+        +CopyFrom(ctx Context, tableName Identifier, columnNames []string, rowSrc CopyFromSource): int64, error
+        +SendBatch(ctx Context, b *Batch): BatchResults
+        +Exec(ctx Context, sql string, arguments ... interface): CommandTag, error
+        +Query(ctx Context, sql string, args ... interface): Rows, error
+        +QueryFunc(ctx Context, sql string, args []interface, scans []interface, f func( QueryFuncRow) error): CommandTag, error
+        +QueryRow(ctx Context, sql string, args ... interface): Row
+    }
+    class Repository {
+        -conn: Excecutor
+        +CreateIfNeededMigrationsTable(ctx Context): error
+    }
+}
+package migrator\internal\adapters\repository\migration{
+    annotation migrator\internal\adapters\repository\migration {
+        -const getQuery: STRING
+        -const createQuery: STRING
+        -const setStatusQuery: STRING
+        -const listQuery: STRING
+        -const getLatestAppliedMigrationQuery: STRING
+
+        +New(conn Excecutor): *Repository
+        -isValidTx(tx Tx): bool
+    }
+    interface Excecutor{
+        +Begin(ctx Context): Tx, error
+        +BeginFunc(ctx Context, f func( Tx) error): error
+        +CopyFrom(ctx Context, tableName Identifier, columnNames []string, rowSrc CopyFromSource): int64, error
+        +SendBatch(ctx Context, b *Batch): BatchResults
+        +Exec(ctx Context, sql string, arguments ... interface): CommandTag, error
+        +Query(ctx Context, sql string, args ... interface): Rows, error
+        +QueryFunc(ctx Context, sql string, args []interface, scans []interface, f func( QueryFuncRow) error): CommandTag, error
+        +QueryRow(ctx Context, sql string, args ... interface): Row
+    }
+    class txKey {
+
+
+    }
+    class Repository {
+        -conn: Excecutor
+        +Get(ctx Context, migrationID int64): MigrationInfo, error
+        +Create(ctx Context, name string, description string, script string, rollbackScript string, userID int64): int64, error
+        +Apply(ctx Context, script string): error
+        +SetStatus(ctx Context, migrationID int64, updatedAt Time, status MigrationStatus): error
+        +List(ctx Context, statusFilter string): []MigrationInfo, error
+        +GetLatestAppliedMigration(ctx Context): MigrationInfo, error
+        +DoInTransaction(ctx Context, f func(ctx Context) error): error
+        +Do(ctx Context): Excecutor
+    }
+}
+package migrator\internal\entity{
+    annotation migrator\internal\entity {
+        -const StatusPending: MigrationStatus
+        -const StatusApplied: MigrationStatus
+        -const StatusRolledBack: MigrationStatus
+
+
+    }
+    class MigrationInfo {
+        +ID: int64
+        +Name: string
+        +Description: string
+        +Script: string
+        +RollbackScript: string
+        +Status: MigrationStatus
+        +CreatedBy: int64
+        +StatusUpdatedAt: Time
+
+    }
+    class MigrationStatus {
+
+        +String(): string
+    }
+}
+package migrator\internal\services\initializer{
+    annotation migrator\internal\services\initializer {
+
+
+        +New(repo initerRepository): *DbInitializerService
+    }
+    interface initerRepository{
+        +CreateIfNeededMigrationsTable(ctx Context): error
+    }
+    class DbInitializerService {
+        -repo: initerRepository
+        +InitDB(ctx Context): error
+    }
+}
+package migrator\internal\services\migrator{
+    annotation migrator\internal\services\migrator {
+
+
+        +New(repo migrationRepository): *Migrator
+    }
+    interface migrationRepository{
+        +Get(ctx Context, migrationID int64): MigrationInfo, error
+        +Create(ctx Context, name string, description string, script string, rollbackScript string, userID int64): int64, error
+        +Apply(ctx Context, script string): error
+        +SetStatus(ctx Context, migrationID int64, updatedAt Time, status MigrationStatus): error
+        +List(ctx Context, statusFilter string): []MigrationInfo, error
+        +GetLatestAppliedMigration(ctx Context): MigrationInfo, error
+        +DoInTransaction(ctx Context, f func(ctx Context) error): error
+    }
+    class Migrator {
+        -repo: migrationRepository
+        +CreateMigration(ctx Context, name string, description string, script string, rollbackScript string, userID int64): int64, error
+        +ApplyMigration(ctx Context, migrationIDs []int64, userID int64): Time, error
+        +RollbackMigration(ctx Context, migrationID int64, userID int64): Time, error
+        +ListMigrations(ctx Context, statusFilter string): []MigrationInfo, error
+        +GetMigration(ctx Context, migrationID int64): MigrationInfo, error
+    }
+}
+package migrator\pkg\logger{
+    annotation migrator\pkg\logger {
+        -const DebugLevel: STRING
+        -const InfoLevel: STRING
+        -const WarnLevel: STRING
+        -const FatalLevel: STRING
+        -const DefaultLevel: STRING
+        -const ErrorLevel: STRING
+        -var packageLogger: *Logger
+        +Init(level string)
+        +Debug(message interface, args ... interface)
+        +Info(message string, args ... interface)
+        +Warn(message string, args ... interface)
+        +Error(message interface, args ... interface)
+        +Fatal(message interface, args ... interface)
+        +New(level string): *Logger
+    }
+    interface Interface{
+        +Debug(message interface, args ... interface)
+        +Info(message string, args ... interface)
+        +Warn(message string, args ... interface)
+        +Error(message interface, args ... interface)
+        +Fatal(message interface, args ... interface)
+    }
+    class Logger {
+        -logger: *Logger
+        +Debug(message interface, args ... interface)
+        +Info(message string, args ... interface)
+        +Warn(message string, args ... interface)
+        +Error(message interface, args ... interface)
+        +Fatal(message interface, args ... interface)
+        -log(message string, args ... interface)
+        -msg(level string, message interface, args ... interface)
+    }
+}
+package migrator\pkg\postgres{
+    annotation migrator\pkg\postgres {
+        -const _defaultMaxPoolSize: INT
+        -const _defaultConnAttempts: INT
+        -const _defaultConnTimeout:
+
+        +MaxPoolSize(size int): Option
+        +ConnAttempts(attempts int): Option
+        +ConnTimeout(timeout Duration): Option
+        +New(url string, opts ... Option): *Postgres, error
+    }
+    class Option {
+
+
+    }
+    class Postgres {
+        -maxPoolSize: int
+        -connAttempts: int
+        -connTimeout: Duration
+        +Pool: *Pool
+        +Close()
+    }
+}
+
+@enduml
